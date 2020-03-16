@@ -101,6 +101,7 @@
   <ItemGroup>
     <Compile Include="ComponentUtil\DeepPointer.cs" />
     <Compile Include="ComponentUtil\MemoryWatcher.cs" />
+    <Compile Include="ComponentUtil\Mono.cs" />
     <Compile Include="ComponentUtil\SignatureScanner.cs" />
     <Compile Include="ComponentUtil\WinAPI.cs" />
     <Compile Include="LiveSplitCore.cs" />
