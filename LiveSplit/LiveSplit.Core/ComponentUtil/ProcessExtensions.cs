@@ -308,6 +308,39 @@ namespace LiveSplit.ComponentUtil
             return str;
         }
         
+        public static string ReadNullTerminatedString(this Process process, IntPtr addr, ReadStringType type, int max)
+        {
+            StringBuilder sb = new StringBuilder();
+            byte[] c = new byte[1];
+            Encoding enc;
+            switch (type)
+            {
+                case ReadStringType.ASCII:
+                    enc = Encoding.ASCII;
+                    break;
+                case ReadStringType.UTF16:
+                    enc = Encoding.Unicode;
+                    break;
+                case ReadStringType.UTF8:
+                    enc = Encoding.UTF8;
+                    break;
+                default:
+                    enc = Encoding.Default;
+                    break;
+            }
+            for (int i = 0; i < max; i++)
+            {
+                c = ReadBytes(process, addr+i, 1);
+                if (((char)c.Single()) == '\0')
+                {
+                    break;
+                }
+                sb.Append(enc.GetChars(c));
+            }
+
+            return sb.ToString();
+        }
+
         public static bool WriteValue<T>(this Process process, IntPtr addr, T obj) where T : struct
         {
             int size = Marshal.SizeOf(obj);
