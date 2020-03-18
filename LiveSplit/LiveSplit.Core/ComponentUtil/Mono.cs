@@ -25,6 +25,11 @@ namespace LiveSplit.ComponentUtil
         /// </summary>
         public const int LOADED_IMAGES_HASH_OFFSET = 0x00494118;
 
+        /// <summary>
+        /// the offset of the internal hash table class_cache relative to a MonoImage
+        /// </summary>
+        public const int CLASS_CACHE_OFFSET = 0x04C0;
+
         public const int MAX_STRING_SIZE = 2048;
 
         /// <summary>
@@ -78,6 +83,12 @@ namespace LiveSplit.ComponentUtil
             return Process.ReadValue<int>(loaded_images_hash + 0x18);
         }
 
+        /// <summary>
+        /// reads the loaded images hash table and retrieves a pointer to the specified image
+        /// </summary>
+        /// <param name="key">the name of the image to find (not including the file path or extension)</param>
+        /// <param name="value">a MonoImage* pointing to the requested image or a null pointer if it could not be located</param>
+        /// <returns></returns>
         public bool GetImage(string key, out IntPtr value)
         {
             LoadedImagesHashTable.DerefOffsets(Process, out IntPtr table);
@@ -109,6 +120,35 @@ namespace LiveSplit.ComponentUtil
             }
 
             value = IntPtr.Zero;
+            return false;
+        }
+
+        public bool GetClass(IntPtr image, uint token, out IntPtr klass)
+        {
+            klass = IntPtr.Zero;
+            if ((token & 0xff000000) != 0x02000000)
+            {
+                //The class much be a type definition, as indicated by the top byte of the token.
+                return false;
+            }
+            IntPtr class_cache = image + CLASS_CACHE_OFFSET;
+            int size = Process.ReadValue<int>(class_cache + 0x18);
+            Debug.WriteLine("class cache size detected as " + size.ToString());
+
+            IntPtr table = Process.ReadPointer(class_cache + 0x20);
+            int bucket = (int)(token % (uint)size);
+            for (IntPtr value = Process.ReadPointer(table + (8 * bucket));
+                value != IntPtr.Zero;
+                value = Process.ReadPointer(value + 0x0108))
+            {
+                uint key = Process.ReadValue<uint>(value + 0x58);
+                if (key == token)
+                {
+                    klass = value;
+                    return true;
+                }
+            }
+
             return false;
         }
     }
