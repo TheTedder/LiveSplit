@@ -137,6 +137,7 @@ namespace LiveSplit.ComponentUtil
 
             IntPtr table = Process.ReadPointer(class_cache + 0x20);
             int bucket = (int)(token % (uint)size);
+            //TODO: make this work for 32bit versions too!
             for (IntPtr value = Process.ReadPointer(table + (8 * bucket));
                 value != IntPtr.Zero;
                 value = Process.ReadPointer(value + 0x0108))
@@ -150,6 +151,21 @@ namespace LiveSplit.ComponentUtil
             }
 
             return false;
+        }
+
+        public bool GetVTable(IntPtr klass, out IntPtr vtable, short domain_idx = 0)
+        {
+            vtable = IntPtr.Zero;
+            IntPtr runtime_info = Process.ReadPointer(klass + 0xD0);
+            short max_domain = Process.ReadValue<short>(runtime_info + 0x00);
+            
+            if (domain_idx >= max_domain)
+            {
+                return false;
+            }
+
+            vtable = Process.ReadPointer(runtime_info + 0x08 + (8 * domain_idx));
+            return true;
         }
     }
 }
