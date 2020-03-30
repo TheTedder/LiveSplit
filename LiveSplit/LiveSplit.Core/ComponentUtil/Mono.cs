@@ -164,8 +164,14 @@ namespace LiveSplit.ComponentUtil
                 return false;
             }
 
+            //TODO: change this so it works with 32bit programs too
             vtable = Process.ReadPointer(runtime_info + 0x08 + (8 * domain_idx));
             return true;
+        }
+
+        public bool HasStaticFields(IntPtr vtable)
+        {
+            return Process.ReadValue<int>(vtable + 0x30) == 0x04;
         }
     }
 }
