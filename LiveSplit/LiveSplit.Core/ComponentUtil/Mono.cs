@@ -198,5 +198,28 @@ namespace LiveSplit.ComponentUtil
             field += MONO_CLASS_FIELD_SIZE * index;
             return true;
         }
+
+        private bool VTableGetStaticFieldData(IntPtr vtable, out IntPtr data)
+        {
+            data = IntPtr.Zero;
+            if (!HasStaticFields(vtable))
+            {
+                return false;
+            }
+
+            if (!Process.ReadPointer(vtable, out IntPtr klass))
+            {
+                return false;
+            }
+
+            if (!Process.ReadValue(klass + 0x5C, out int vtable_size))
+            {
+                return false;
+            }
+
+            //TODO: make this 32bit friendly
+            data = vtable + 0x40 + (8 * vtable_size);
+            return true;
+        }
     }
 }
