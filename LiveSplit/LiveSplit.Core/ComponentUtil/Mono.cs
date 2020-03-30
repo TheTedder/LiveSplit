@@ -184,6 +184,12 @@ namespace LiveSplit.ComponentUtil
 
         public bool GetClassField(IntPtr klass, int index, out IntPtr field)
         {
+            uint field_count = Process.ReadValue<uint>(klass + 0x100);
+            if (index < 0 || index >= field_count)
+            {
+                field = IntPtr.Zero;
+                return false;
+            }
             if (!Process.ReadPointer(klass + 0x98, out field))
             {
                 return false;
