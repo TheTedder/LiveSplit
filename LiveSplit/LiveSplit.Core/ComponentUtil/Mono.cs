@@ -173,5 +173,11 @@ namespace LiveSplit.ComponentUtil
         {
             return Process.ReadValue<int>(vtable + 0x30) == 0x04;
         }
+
+        public int GetStaticFieldCount(IntPtr klass)
+        {
+            //TODO: change this so it works with 32bit programs too
+            return Process.ReadValue<int>(klass + 0x90) / 8;
+        }
     }
 }
