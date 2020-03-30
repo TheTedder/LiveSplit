@@ -32,6 +32,8 @@ namespace LiveSplit.ComponentUtil
 
         public const int MAX_STRING_SIZE = 2048;
 
+        public const int MONO_CLASS_FIELD_SIZE = 0x20;
+
         /// <summary>
         /// pointer to hash table containing all currently loaded images
         /// </summary>
@@ -178,6 +180,17 @@ namespace LiveSplit.ComponentUtil
         {
             //TODO: change this so it works with 32bit programs too
             return Process.ReadValue<int>(klass + 0x90) / 8;
+        }
+
+        public bool GetClassField(IntPtr klass, int index, out IntPtr field)
+        {
+            if (!Process.ReadPointer(klass + 0x98, out field))
+            {
+                return false;
+            }
+
+            field += MONO_CLASS_FIELD_SIZE * index;
+            return true;
         }
     }
 }
