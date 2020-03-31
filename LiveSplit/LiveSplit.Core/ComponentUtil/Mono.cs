@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Reflection;
 
 namespace LiveSplit.ComponentUtil
 {
@@ -51,6 +52,54 @@ namespace LiveSplit.ComponentUtil
 
     public class Mono
     {
+        
+        private protected Field MakeField(IntPtr address)
+        {
+            try
+            {
+                switch (Process.ReadValue<MonoTypeEnum>(address))
+                {
+                    case MonoTypeEnum.MONO_TYPE_BOOLEAN:
+                        return new Field<bool>(this, address, BitConverter.ToBoolean);
+                    case MonoTypeEnum.MONO_TYPE_U1:
+                        return new Field<byte>(this, address, (byte[] bytes, int si) =>
+                            {
+                                return bytes.Single();
+                            }
+                        );
+                    case MonoTypeEnum.MONO_TYPE_I1:
+                        return new Field<sbyte>(this, address, (byte[] bytes, int si) =>
+                            {
+                                return (sbyte)bytes.Single();
+                            }
+                        );
+
+                    case MonoTypeEnum.MONO_TYPE_CHAR:
+                        return new Field<char>(this, address, BitConverter.ToChar);
+                    case MonoTypeEnum.MONO_TYPE_U2:
+                        return new Field<ushort>(this, address, BitConverter.ToUInt16);
+                    case MonoTypeEnum.MONO_TYPE_I2:
+                        return new Field<short>(this, address, BitConverter.ToInt16);
+
+                    case MonoTypeEnum.MONO_TYPE_U4:
+                        return new Field<uint>(this, address, BitConverter.ToUInt32);
+                    case MonoTypeEnum.MONO_TYPE_I4:
+                        return new Field<int>(this, address, BitConverter.ToInt32);
+                    case MonoTypeEnum.MONO_TYPE_R4:
+                        return new Field<float>(this, address, BitConverter.ToSingle);
+                    //TODO: finish this
+
+                    default:
+                        return new Field<long>(this, address, BitConverter.ToInt64);
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                throw ex;
+            }
+        }
+
         /// <summary>
         /// the process containing the mono dll
         /// </summary>
@@ -224,20 +273,24 @@ namespace LiveSplit.ComponentUtil
             return Process.ReadValue<int>(klass + 0x90) / 8;
         }
 
-        public bool GetClassField(IntPtr klass, int index, out IntPtr field)
+        public bool GetClassField(IntPtr klass, int index, out FieldInfo field)
         {
+            field = null;
+            //TODO: make this its own function
             uint field_count = Process.ReadValue<uint>(klass + 0x100);
+            
             if (index < 0 || index >= field_count)
             {
-                field = IntPtr.Zero;
                 return false;
             }
-            if (!Process.ReadPointer(klass + 0x98, out field))
+            if (!Process.ReadPointer(klass + 0x98, out IntPtr address))
             {
                 return false;
             }
 
-            field += MONO_CLASS_FIELD_SIZE * index;
+            address += MONO_CLASS_FIELD_SIZE * index;
+
+            field = new FieldInfo(MakeField(address));
             return true;
         }
 
@@ -262,6 +315,149 @@ namespace LiveSplit.ComponentUtil
             //TODO: make this 32bit friendly
             data = vtable + 0x40 + (8 * vtable_size);
             return true;
+        }
+
+       
+        public abstract class Inner<T>
+        {
+            protected readonly T parent;
+
+            public Inner(T p)
+            {
+                Type type = GetType();
+                if (!type.IsNested)
+                {
+                    throw new Exception("Only nested types can inherit from Inner.");
+                }
+
+                if (!type.DeclaringType.Equals(typeof(T)))
+                {
+                    throw new ArgumentException(string.Format("Expected {0} to be of type {1}. Got {2} instead.",
+                        nameof(p),
+                        GetType().DeclaringType,
+                        typeof(T)
+                    ), nameof(p));
+                    
+                }
+
+                parent = p;
+            }
+        }
+
+        public sealed class FieldInfo
+        {
+            internal readonly Field field;
+            internal FieldInfo(Field f)
+            {
+                field = f;
+            }
+
+            public Type Type => field.Type;
+            public int Size => field.Size;
+            public IntPtr Address => field.Address;
+        }
+
+        abstract internal class Field : Inner<Mono>, IEquatable<Field>
+        {
+            public readonly Type Type;
+            public readonly int Size;
+            public readonly IntPtr Address;
+
+            public static implicit operator IntPtr(Field f) => f.Address;
+
+            protected Field(Type t, int s, Mono m, IntPtr address) : base(m)
+            {
+                Type = t;
+                Size = s;
+                Address = address;
+            }
+
+            public bool Equals(Field other)
+            {
+                return Address == other.Address;
+            }
+
+            public override int GetHashCode()
+            {
+                return Address.GetHashCode();
+            }
+
+            public virtual object GetValue(byte[] bytes)
+            {
+                return default;
+            }
+        }
+
+        internal unsafe sealed class Field<T> : Field where T : unmanaged
+        {
+            public delegate T Converter(byte[] value, int StartIndex);
+            private static T defaultconverter(byte[] value, int si)
+            {
+                return (T)value.Skip(si);
+            }
+            private readonly Converter converter;
+            internal Field(Mono p, IntPtr addr, Converter c = null) : base(typeof(T), sizeof(T), p, addr)
+            {
+                converter = c ?? defaultconverter;
+            }
+
+            public bool GetOffset(out int offset)
+            {
+                return parent.Process.ReadValue(Address + 0x18, out offset);
+            }
+
+            public bool IsStatic()
+            {
+                IntPtr type = parent.Process.ReadPointer(Address);
+                return (parent.Process.ReadValue<uint>(type + 0x08) & 0x10) != 0;
+            }
+
+            public override object GetValue(byte[] bytes)
+            {
+                return converter(bytes, 0);
+            }
+        }
+
+        public bool GetStaticFieldValue(IntPtr vtable, FieldInfo fieldinfo, out object value)
+        {
+            value = default;
+            Field field = fieldinfo.field;
+            IntPtr type = Process.ReadPointer(field.Address + 0x00);
+            uint attrs = Process.ReadValue<uint>(type + 0x08);
+            
+            //TODO: make these constants
+            if ((attrs & 0x10) == 0)
+            {
+                //This is not a static field.
+                return false;
+            }
+
+            if ((attrs & 0x40) != 0)
+            {
+                //This field is a literal.
+                throw new NotImplementedException("Reading literals isn't supported yet.");
+            }
+
+            int offset = Process.ReadValue<int>(field.Address + 0x18);
+            if (offset == -1)
+            {
+                //This is a special static field.
+                throw new NotImplementedException("Reading from special static fields isn't supported yet.");
+            }
+            else
+            {
+                bool result = VTableGetStaticFieldData(vtable, out IntPtr address);
+                if (!result)
+                {
+                    return false;
+                }
+
+                //Type fieldtype = field.GetType().GenericTypeArguments[0];
+                //PLACEHOLDER
+                bool res = Process.ReadBytes(address + offset, field.Size, out byte[] bytes);
+                value = field.GetValue(bytes);
+                return res;
+            }
         }
     }
 }
