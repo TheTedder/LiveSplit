@@ -7,7 +7,7 @@ using System.Text;
 
 namespace LiveSplit.ComponentUtil
 {
-    public enum MonoTypeEnum : int
+    public enum MonoTypeEnum : byte
     {
         MONO_TYPE_END = 0x00,       /* End of List */
         MONO_TYPE_VOID = 0x01,
@@ -55,7 +55,7 @@ namespace LiveSplit.ComponentUtil
         /// the process containing the mono dll
         /// </summary>
         public readonly Process Process;
-        
+
         /// <summary>
         /// the mono dll
         /// </summary>
@@ -91,7 +91,7 @@ namespace LiveSplit.ComponentUtil
         public static uint g_str_hash(string v1)
         {
             uint hash = 0;
-            
+
             foreach (char p in v1.Substring(1))
             {
                 hash = (hash << 5) - (hash + p);
@@ -99,7 +99,7 @@ namespace LiveSplit.ComponentUtil
 
             // The C implementation expects a null-terminated string so we
             // repeat the process one more time at the end.
-            
+
             hash = (hash << 5) - hash;
 
             return hash;
@@ -115,7 +115,7 @@ namespace LiveSplit.ComponentUtil
 
             //get the mono dll currently in use by the process
             DLL = process.ModulesWow64Safe().First(mod => mod.ModuleName.StartsWith("mono"));
-           
+
             //try to get a pointer to the loaded images hash table
             bool loaded_images_hash_exists = Process.ReadPointer(DLL.BaseAddress + LOADED_IMAGES_HASH_OFFSET, out loaded_images_hash);
 
@@ -150,7 +150,7 @@ namespace LiveSplit.ComponentUtil
 
             IntPtr s, strPtr;
             string str;
-            for (Process.ReadPointer(table+(int)(hashcode * 8), out s); s != IntPtr.Zero; Process.ReadPointer(s + 0x10, out s))
+            for (Process.ReadPointer(table + (int)(hashcode * 8), out s); s != IntPtr.Zero; Process.ReadPointer(s + 0x10, out s))
             {
                 //Debug.WriteLine("looking in bucket at " + s.ToString("X16"));
                 strPtr = Process.ReadPointer(s);
@@ -202,7 +202,7 @@ namespace LiveSplit.ComponentUtil
             vtable = IntPtr.Zero;
             IntPtr runtime_info = Process.ReadPointer(klass + 0xD0);
             short max_domain = Process.ReadValue<short>(runtime_info + 0x00);
-            
+
             if (domain_idx >= max_domain)
             {
                 return false;
@@ -262,6 +262,41 @@ namespace LiveSplit.ComponentUtil
             //TODO: make this 32bit friendly
             data = vtable + 0x40 + (8 * vtable_size);
             return true;
+        }
+
+        public bool GetStaticFieldAddress(IntPtr vtable, IntPtr field, out IntPtr address)
+        {
+            address = IntPtr.Zero;
+            IntPtr type = Process.ReadPointer(field + 0x00);
+            //attrs is a 16bit bitfield
+            ushort attrs = Process.ReadValue<ushort>(type + 0x08);
+
+            //TODO: make these constants
+            if ((attrs & 0x10) == 0)
+            {
+                //This is not a static field.
+                return false;
+            }
+
+            if ((attrs & 0x40) != 0)
+            {
+                //This field is a literal.
+                throw new NotImplementedException("Reading literals isn't supported yet.");
+            }
+
+            int offset = Process.ReadValue<int>(field + 0x18);
+            if (offset == -1)
+            {
+                //This is a special static field.
+                throw new NotImplementedException("Reading from special static fields isn't supported yet.");
+            }
+            else
+            {
+                VTableGetStaticFieldData(vtable, out IntPtr fielddata);
+                IntPtr src = fielddata + offset;
+                //TODO: account for Valuetypes and GenericInsts
+                return Process.ReadPointer(src, out address);
+            }
         }
     }
 }
