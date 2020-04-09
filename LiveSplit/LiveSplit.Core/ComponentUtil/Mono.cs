@@ -243,6 +243,73 @@ namespace LiveSplit.ComponentUtil
             return true;
         }
 
+        protected void CopyAddress(IntPtr type, out IntPtr address, IntPtr value)
+        {
+            MonoTypeEnum t;
+            bool byref = (Process.ReadValue<byte>(type + 0x0B) & 0x40) != 0;
+
+            if (byref)
+            {
+                address = Process.ReadPointer(value);
+                return;
+            }
+
+            t = Process.ReadValue<MonoTypeEnum>(type + 0x0A);
+        handle_enum:
+            switch(t)
+            {
+                case MonoTypeEnum.MONO_TYPE_BOOLEAN:
+                case MonoTypeEnum.MONO_TYPE_I1:
+                case MonoTypeEnum.MONO_TYPE_U1:
+                    //1 byte int type
+                case MonoTypeEnum.MONO_TYPE_I2:
+                case MonoTypeEnum.MONO_TYPE_U2:
+                case MonoTypeEnum.MONO_TYPE_CHAR:
+                    //2 byte int type
+                case MonoTypeEnum.MONO_TYPE_I4:
+                case MonoTypeEnum.MONO_TYPE_U4:
+                    //4 byte int type
+                case MonoTypeEnum.MONO_TYPE_I:
+                case MonoTypeEnum.MONO_TYPE_U:
+                    //pointers
+                case MonoTypeEnum.MONO_TYPE_I8:
+                case MonoTypeEnum.MONO_TYPE_U8:
+                    //8 byte int type
+                case MonoTypeEnum.MONO_TYPE_R4:
+                    //float
+                case MonoTypeEnum.MONO_TYPE_R8:
+                    //double
+                    address = value;
+                    return;
+                case MonoTypeEnum.MONO_TYPE_STRING:
+                case MonoTypeEnum.MONO_TYPE_SZARRAY:
+                case MonoTypeEnum.MONO_TYPE_CLASS:
+                case MonoTypeEnum.MONO_TYPE_OBJECT:
+                case MonoTypeEnum.MONO_TYPE_ARRAY:
+                    //Normally these would call gc_wbarrier_generic_store.
+                case MonoTypeEnum.MONO_TYPE_FNPTR:
+                case MonoTypeEnum.MONO_TYPE_PTR:
+                    address = Process.ReadPointer(value);
+                    return;
+                case MonoTypeEnum.MONO_TYPE_VALUETYPE:
+                    //TODO
+                    //IntPtr data_klass = Process.ReadPointer(type + 0x00);
+                    //bool 
+
+                    //PLACEHOLDER
+                    address = IntPtr.Zero;
+                    throw new NotImplementedException("Valuetypes are not supported yet.");
+                case MonoTypeEnum.MONO_TYPE_GENERICINST:
+                    //TODO
+
+                    //PLACEHOLDER
+                    address = IntPtr.Zero;
+                    throw new NotImplementedException("Generic instances are not supported yet.");
+                default:
+                    throw new ApplicationException(string.Format("got type {0}", t.ToString("x")));
+            }
+        }
+
         public bool GetFieldAddress(IntPtr obj, IntPtr field, out IntPtr address)
         {
             IntPtr src;
