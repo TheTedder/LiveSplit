@@ -296,6 +296,7 @@ namespace LiveSplit.View
             InvalidationRequired = false;
 
             Hook = new CompositeHook();
+            Hook.GamepadHookInitialized += Hook_GamepadHookInitialized;
             Hook.KeyOrButtonPressed += hook_KeyOrButtonPressed;
             Settings.RegisterHotkeys(Hook, CurrentState.CurrentHotkeyProfile);
 
@@ -565,6 +566,11 @@ namespace LiveSplit.View
                 }
                 MaintainMinimumSize();
             }
+        }
+
+        private void Hook_GamepadHookInitialized(object sender, EventArgs e)
+        {
+            CheckForUpdates();
         }
 
         private void CheckForUpdates()
@@ -1039,15 +1045,6 @@ namespace LiveSplit.View
                         Model.SwitchComparisonNext();
                 }
 
-                if (ActiveForm == this && !ResetMessageShown && !IsInDialogMode)
-                {
-                    if (Settings.ScrollUp == e)
-                        Model.ScrollUp();
-
-                    else if (Settings.ScrollDown == e)
-                        Model.ScrollDown();
-                }
-
                 if (hotkeyProfile.ToggleGlobalHotkeys == e)
                 {
                     hotkeyProfile.GlobalHotkeysEnabled = !hotkeyProfile.GlobalHotkeysEnabled;
@@ -1413,6 +1410,17 @@ namespace LiveSplit.View
             }
         }
 
+        private void TimerForm_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (e.Delta > 0)
+            {
+                Model.ScrollUp();
+            } else if (e.Delta < 0)
+            {
+                Model.ScrollDown();
+            }
+        }
+
         protected bool ShowSRLRules()
         {
             if (!Settings.AgreedToSRLRules)
@@ -1717,7 +1725,7 @@ namespace LiveSplit.View
             }
         }
 
-        private void SaveSplitsAs(bool promptPBMessage)
+        private bool SaveSplitsAs(bool promptPBMessage)
         {
             using (var splitDialog = new SaveFileDialog())
             {
@@ -1730,8 +1738,9 @@ namespace LiveSplit.View
                     if (result == DialogResult.OK)
                     {
                         CurrentState.Run.FilePath = splitDialog.FileName;
-                        SaveSplits(promptPBMessage);
+                        return SaveSplits(promptPBMessage);
                     }
+                    return false;
                 }
                 finally
                 {
@@ -1740,14 +1749,13 @@ namespace LiveSplit.View
             }
         }
 
-        private void SaveSplits(bool promptPBMessage)
+        private bool SaveSplits(bool promptPBMessage)
         {
             var savePath = CurrentState.Run.FilePath;
 
             if (savePath == null)
             {
-                SaveSplitsAs(promptPBMessage);
-                return;
+                return SaveSplitsAs(promptPBMessage);
             }
 
             CurrentState.Run.FixSplits();
@@ -1768,7 +1776,7 @@ namespace LiveSplit.View
                     Model.ResetAndSetAttemptAsPB();
                 }
                 else if (result == DialogResult.Cancel)
-                    return;
+                    return false;
             }
 
             var stateCopy = CurrentState;
@@ -1804,10 +1812,12 @@ namespace LiveSplit.View
             {
                 MessageBox.Show(this, "Splits could not be saved!", "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Log.Error(ex);
+                return false;
             }
+            return true;
         }
 
-        private void SaveLayout()
+        private bool SaveLayout()
         {
             var savePath = Layout.FilePath;
             if (Layout.Mode == LayoutMode.Vertical)
@@ -1825,8 +1835,7 @@ namespace LiveSplit.View
 
             if (savePath == null)
             {
-                SaveLayoutAs();
-                return;
+                return SaveLayoutAs();
             }
 
             try
@@ -1853,7 +1862,9 @@ namespace LiveSplit.View
             {
                 MessageBox.Show(this, "Layout could not be saved!", "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Log.Error(ex);
+                return false;
             }
+            return true;
         }
 
         private void EditSplits()
@@ -2047,7 +2058,7 @@ namespace LiveSplit.View
             SetLayout(Layout);
         }
 
-        private void SaveLayoutAs()
+        private bool SaveLayoutAs()
         {
             using (var layoutDialog = new SaveFileDialog())
             {
@@ -2059,8 +2070,9 @@ namespace LiveSplit.View
                     if (result == DialogResult.OK)
                     {
                         Layout.FilePath = layoutDialog.FileName;
-                        SaveLayout();
+                        return SaveLayout();
                     }
+                    return false;
                 }
                 finally
                 {
@@ -2068,6 +2080,7 @@ namespace LiveSplit.View
                 }
             }
         }
+
         private void OpenAboutBox()
         {
             using (var aboutBox = new AboutBox())
@@ -2260,6 +2273,7 @@ namespace LiveSplit.View
                 return true;
             }
 
+            bool safeToContinue = true;
             if (CurrentState.Run.HasChanged)
             {
                 try
@@ -2268,7 +2282,7 @@ namespace LiveSplit.View
                     var result = MessageBox.Show(this, "Your splits have been updated but not yet saved.\nDo you want to save your splits now?", "Save Splits?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
                     if (result == DialogResult.Yes)
                     {
-                        SaveSplits(false);
+                        safeToContinue = SaveSplits(false);
                     }
                     else if (result == DialogResult.Cancel)
                     {
@@ -2280,12 +2294,16 @@ namespace LiveSplit.View
                     DontRedraw = false;
                 }
             }
-            Model.Reset();
-            return true;
+            if (safeToContinue)
+            {
+                Model.Reset();
+            }
+            return safeToContinue;
         }
 
         private bool WarnUserAboutLayoutSave(bool canCancel)
         {
+            bool safeToContinue = true;
             if (Layout.HasChanged)
             {
                 try
@@ -2295,7 +2313,7 @@ namespace LiveSplit.View
                     var result = MessageBox.Show(this, "Your layout has been updated but not yet saved.\nDo you want to save your layout now?", "Save Layout?", buttons, MessageBoxIcon.Question);
                     if (result == DialogResult.Yes)
                     {
-                        SaveLayout();
+                        safeToContinue = SaveLayout();
                     }
                     else if (result == DialogResult.Cancel)
                     {
@@ -2307,7 +2325,7 @@ namespace LiveSplit.View
                     DontRedraw = false;
                 }
             }
-            return true;
+            return safeToContinue;
         }
 
         private void TimerForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -2405,11 +2423,6 @@ namespace LiveSplit.View
                 Log.Error(e);
                 Settings = new StandardSettingsFactory().Create();
             }
-        }
-
-        private void TimerForm_Load(object sender, EventArgs e)
-        {
-            CheckForUpdates();
         }
 
         private void closeSplitsMenuItem_Click(object sender, EventArgs e)

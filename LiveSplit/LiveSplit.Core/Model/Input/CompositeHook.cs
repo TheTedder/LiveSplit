@@ -1,7 +1,9 @@
-﻿using SharpDX.DirectInput;
+﻿using LiveSplit.Options;
+using SharpDX.DirectInput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace LiveSplit.Model.Input
@@ -80,6 +82,8 @@ namespace LiveSplit.Model.Input
         protected LowLevelKeyboardHook KeyboardHook { get; set; }
         protected GamepadHook GamepadHook { get; set; }
 
+        private bool hasPolledGamepadHook;
+
         protected List<GamepadButton> RegisteredButtons { get; set;}
 
         public event KeyEventHandler KeyPressed;
@@ -87,18 +91,36 @@ namespace LiveSplit.Model.Input
         public event EventHandlerT<GamepadButton> AnyGamepadButtonPressed;
         public event EventHandlerT<KeyOrButton> KeyOrButtonPressed;
 
+        public event EventHandler GamepadHookInitialized;
+
         public CompositeHook()
         {
             KeyboardHook = new LowLevelKeyboardHook();
-            GamepadHook = new GamepadHook();
             RegisteredButtons = new List<GamepadButton>();
             KeyboardHook.KeyPressed += KeyboardHook_KeyPressed;
-            GamepadHook.ButtonPressed += GamepadHook_ButtonPressed;
+            InitializeGamepadHook();
         }
 
         public Joystick GetMouse()
         {
             return GamepadHook.GetMouse();
+        }
+
+        void InitializeGamepadHook()
+        {
+            hasPolledGamepadHook = false;
+            Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    GamepadHook = new GamepadHook();
+                    GamepadHook.ButtonPressed += GamepadHook_ButtonPressed;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex);
+                }
+            });
         }
 
         void KeyboardHook_KeyPressed(object sender, KeyEventArgs e)
@@ -143,7 +165,15 @@ namespace LiveSplit.Model.Input
 
         public void Poll()
         {
-            GamepadHook.Poll();
+            if (GamepadHook != null)
+            {
+                if (!hasPolledGamepadHook)
+                {
+                    hasPolledGamepadHook = true;
+                    GamepadHookInitialized?.Invoke(this, null);
+                }
+                GamepadHook.Poll();
+            }
             KeyboardHook.Poll();
         }
 
