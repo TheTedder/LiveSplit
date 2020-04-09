@@ -4,6 +4,7 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using static LiveSplit.UI.SettingsHelper;
@@ -60,7 +61,7 @@ namespace LiveSplit.Model.RunFactories
         public Stream Stream { get; set; }
         public string FilePath { get; set; }
 
-        public StandardFormatsRunFactory(Stream stream = null, string filePath = null)
+        public StandardFormatsRunFactory(Stream stream = null, string filePath = "")
         {
             Stream = stream;
             FilePath = filePath;
@@ -98,21 +99,21 @@ namespace LiveSplit.Model.RunFactories
             };
         }
 
-        static Image ParseImage(string dataUrl)
+        static Image ParseImage(IntPtr imagePtr, long length)
         {
-            if (!dataUrl.StartsWith("data:;base64,"))
+            if (length == 0)
             {
                 return null;
             }
 
-            var base64Data = dataUrl.Substring("data:;base64,".Length);
-            var binData = Convert.FromBase64String(base64Data);
+            byte[] buffer = new byte[length];
+            Marshal.Copy(imagePtr, buffer, 0, buffer.Length);
 
             // Do not dispose this memory stream, as the Image internally
             // borrows it for saving it out later on. This results in a
             // generic GDI+ error.
             // See https://github.com/LiveSplit/LiveSplit/issues/894
-            var stream = new MemoryStream(binData);
+            var stream = new MemoryStream(buffer);
 
             return Image.FromStream(stream);
         }
@@ -147,16 +148,16 @@ namespace LiveSplit.Model.RunFactories
                 run.Metadata.PlatformName = metadata.PlatformName();
                 run.Metadata.UsesEmulator = metadata.UsesEmulator();
                 run.Metadata.RegionName = metadata.RegionName();
-                using (var iter = metadata.Variables())
+                using (var iter = metadata.SpeedrunComVariables())
                 {
-                    LiveSplitCore.RunMetadataVariableRef variable;
+                    LiveSplitCore.RunMetadataSpeedrunComVariableRef variable;
                     while ((variable = iter.Next()) != null)
                     {
                         run.Metadata.VariableValueNames.Add(variable.Name(), variable.Value());
                     }
                 }
 
-                run.GameIcon = ParseImage(lscRun.GameIcon()).ScaleIcon();
+                run.GameIcon = ParseImage(lscRun.GameIconPtr(), lscRun.GameIconLen());
                 run.GameName = lscRun.GameName();
                 run.CategoryName = lscRun.CategoryName();
                 run.Offset = ParseTimeSpan(lscRun.Offset());
@@ -191,7 +192,7 @@ namespace LiveSplit.Model.RunFactories
                     var segment = lscRun.Segment(i);
                     var split = new Segment(segment.Name())
                     {
-                        Icon = ParseImage(segment.Icon()),
+                        Icon = ParseImage(segment.IconPtr(), segment.IconLen()),
                         BestSegmentTime = ParseTime(segment.BestSegmentTime()),
                     };
 
@@ -211,11 +212,6 @@ namespace LiveSplit.Model.RunFactories
 
                     run.Add(split);
                 }
-
-                Parallel.ForEach(run, segment =>
-                {
-                    segment.Icon = segment.Icon.ScaleIcon();
-                });
 
                 var document = new XmlDocument();
                 document.LoadXml($"<AutoSplitterSettings>{lscRun.AutoSplitterSettings()}</AutoSplitterSettings>");
