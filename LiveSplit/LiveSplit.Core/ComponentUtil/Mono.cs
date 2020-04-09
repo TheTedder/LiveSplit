@@ -266,6 +266,21 @@ namespace LiveSplit.ComponentUtil
             return true;
         }
 
+        /// <summary>
+        /// Returns the address of a static field of a class.
+        /// </summary>
+        /// <param name="vtable">
+        /// the vtable belonging to the class that owns this field
+        /// </param>
+        /// <param name="field">
+        /// IntPtr to a MonoClassField specifying the (static) class to retrieve
+        /// </param>
+        /// <param name="address">
+        /// the address of the value of the field
+        /// </param>
+        /// <returns>
+        /// a bool indicating success
+        /// </returns>
         public bool GetStaticFieldAddress(IntPtr vtable, IntPtr field, out IntPtr address)
         {
             address = IntPtr.Zero;
