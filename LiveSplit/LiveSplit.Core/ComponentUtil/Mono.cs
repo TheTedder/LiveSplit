@@ -76,6 +76,8 @@ namespace LiveSplit.ComponentUtil
 
         public const int MONO_CLASS_FIELD_SIZE = 0x20;
 
+        public const ushort FIELD_ATTRIBUTE_STATIC = 0x0010;
+
         /// <summary>
         /// pointer to hash table containing all currently loaded images
         /// </summary>
@@ -272,7 +274,7 @@ namespace LiveSplit.ComponentUtil
             ushort attrs = Process.ReadValue<ushort>(type + 0x08);
 
             //TODO: make these constants
-            if ((attrs & 0x10) == 0)
+            if ((attrs & FIELD_ATTRIBUTE_STATIC) == 0)
             {
                 //This is not a static field.
                 return false;
