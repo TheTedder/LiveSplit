@@ -243,6 +243,31 @@ namespace LiveSplit.ComponentUtil
             return true;
         }
 
+        public bool GetFieldAddress(IntPtr obj, IntPtr field, out IntPtr address)
+        {
+            IntPtr src;
+
+            if (obj == IntPtr.Zero)
+            {
+                address = IntPtr.Zero;
+                return false;
+            }
+
+            IntPtr type = Process.ReadPointer(field + 0x00);
+            ushort attrs = Process.ReadValue<ushort>(type + 0x08);
+            if ((attrs & FIELD_ATTRIBUTE_STATIC) != 0)
+            {
+                address = IntPtr.Zero;
+                return false;
+            }
+
+            int offset = Process.ReadValue<int>(field + 0x18);
+            src = obj + offset;
+
+            //Process.ReadPointer(src, out address);
+            address = src;
+            return true;
+        }
         private bool VTableGetStaticFieldData(IntPtr vtable, out IntPtr data)
         {
             data = IntPtr.Zero;
