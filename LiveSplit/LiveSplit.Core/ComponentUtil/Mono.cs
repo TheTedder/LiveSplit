@@ -264,7 +264,6 @@ namespace LiveSplit.ComponentUtil
             int offset = Process.ReadValue<int>(field + 0x18);
             src = obj + offset;
 
-            //Process.ReadPointer(src, out address);
             address = src;
             return true;
         }
