@@ -267,6 +267,7 @@ namespace LiveSplit.ComponentUtil
             address = src;
             return true;
         }
+
         private bool VTableGetStaticFieldData(IntPtr vtable, out IntPtr data)
         {
             data = IntPtr.Zero;
@@ -334,9 +335,8 @@ namespace LiveSplit.ComponentUtil
             else
             {
                 VTableGetStaticFieldData(vtable, out IntPtr fielddata);
-                IntPtr src = fielddata + offset;
-                //TODO: account for Valuetypes and GenericInsts
-                return Process.ReadPointer(src, out address);
+                address = fielddata + offset;
+                return true;
             }
         }
     }
