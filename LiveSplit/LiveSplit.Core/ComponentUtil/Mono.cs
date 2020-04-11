@@ -305,19 +305,26 @@ namespace LiveSplit.ComponentUtil
                     address = Process.ReadPointer(value);
                     return;
                 case MonoTypeEnum.MONO_TYPE_VALUETYPE:
-                    //TODO
-                    //IntPtr data_klass = Process.ReadPointer(type + 0x00);
-                    //bool 
-
-                    //PLACEHOLDER
-                    address = IntPtr.Zero;
-                    throw new NotImplementedException("Valuetypes are not supported yet.");
+                    IntPtr klass = Process.ReadPointer(type + 0x00);
+                    int enumtype = Process.ReadValue<byte>(klass + 0x20) & 0b1000;
+                    if (enumtype != 0)
+                    {
+                        IntPtr enum_basetype = ClassEnumBasetype(klass);
+                        t = Process.ReadValue<MonoTypeEnum>(enum_basetype + 0x0A);
+                        goto handle_enum;
+                    }
+                    else
+                    {
+                        //GC nonsense
+                        address = value;
+                    }
+                    return;
                 case MonoTypeEnum.MONO_TYPE_GENERICINST:
                     //TODO
-
-                    //PLACEHOLDER
-                    address = IntPtr.Zero;
-                    throw new NotImplementedException("Generic instances are not supported yet.");
+                    IntPtr generic_class = Process.ReadPointer(type + 0x00);
+                    IntPtr container_class = Process.ReadPointer(generic_class + 0x00);
+                    t = Process.ReadValue<MonoTypeEnum>(container_class + 0xC2);
+                    goto handle_enum;
                 default:
                     throw new ApplicationException(string.Format("got type {0}", t.ToString("x")));
             }
