@@ -215,6 +215,7 @@ namespace LiveSplit.ComponentUtil
             return true;
         }
 
+        //TODO: FIX
         public bool HasStaticFields(IntPtr vtable)
         {
             return Process.ReadValue<int>(vtable + 0x30) == 0x04;
@@ -330,29 +331,25 @@ namespace LiveSplit.ComponentUtil
             }
         }
 
-        public bool GetFieldAddress(IntPtr obj, IntPtr field, out IntPtr address)
+        public void GetFieldAddress(IntPtr obj, IntPtr field, ref IntPtr address)
         {
             IntPtr src;
 
             if (obj == IntPtr.Zero)
             {
-                address = IntPtr.Zero;
-                return false;
+                 return;
             }
 
             IntPtr type = Process.ReadPointer(field + 0x00);
             ushort attrs = Process.ReadValue<ushort>(type + 0x08);
             if ((attrs & FIELD_ATTRIBUTE_STATIC) != 0)
             {
-                address = IntPtr.Zero;
-                return false;
+                return;
             }
 
             int offset = Process.ReadValue<int>(field + 0x18);
             src = obj + offset;
-
-            address = src;
-            return true;
+            CopyAddress(type, out address, src);
         }
 
         private bool VTableGetStaticFieldData(IntPtr vtable, out IntPtr data)
@@ -393,8 +390,9 @@ namespace LiveSplit.ComponentUtil
         /// <returns>
         /// a bool indicating success
         /// </returns>
-        public bool GetStaticFieldAddress(IntPtr vtable, IntPtr field, out IntPtr address)
+        public void GetStaticFieldAddress(IntPtr vtable, IntPtr field, out IntPtr address)
         {
+            IntPtr src;
             address = IntPtr.Zero;
             IntPtr type = Process.ReadPointer(field + 0x00);
             //attrs is a 16bit bitfield
@@ -404,7 +402,7 @@ namespace LiveSplit.ComponentUtil
             if ((attrs & FIELD_ATTRIBUTE_STATIC) == 0)
             {
                 //This is not a static field.
-                return false;
+                return;
             }
 
             if ((attrs & 0x40) != 0)
@@ -422,9 +420,9 @@ namespace LiveSplit.ComponentUtil
             else
             {
                 VTableGetStaticFieldData(vtable, out IntPtr fielddata);
-                address = fielddata + offset;
-                return true;
+                src = fielddata + offset;
             }
+            CopyAddress(type, out address, src);
         }
     }
 }
