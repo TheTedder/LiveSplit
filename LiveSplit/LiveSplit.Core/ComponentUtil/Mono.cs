@@ -243,6 +243,19 @@ namespace LiveSplit.ComponentUtil
             return true;
         }
 
+        protected IntPtr ClassEnumBasetype(IntPtr klass)
+        {
+            IntPtr element_class = Process.ReadPointer(klass + 0x00);
+            if (element_class == klass)
+            {
+                return IntPtr.Zero;
+            }
+            else
+            {
+                return element_class + 0xB8;
+            }
+        }
+
         protected void CopyAddress(IntPtr type, out IntPtr address, IntPtr value)
         {
             MonoTypeEnum t;
