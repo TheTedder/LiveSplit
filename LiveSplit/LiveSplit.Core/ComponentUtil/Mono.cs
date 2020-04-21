@@ -331,7 +331,7 @@ namespace LiveSplit.ComponentUtil
             }
         }
 
-        public void GetFieldAddress(IntPtr obj, IntPtr field, ref IntPtr address)
+        public void GetFieldAddress(IntPtr obj, IntPtr field, out IntPtr address)
         {
             IntPtr src;
 
