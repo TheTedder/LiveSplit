@@ -107,6 +107,7 @@ namespace LiveSplit.View
         protected bool InvalidationRequired { get; set; }
 
         public string BasePath { get; set; }
+        protected IEnumerable<RaceProviderAPI> RaceProvider { get; set; }
 
         private bool MousePassThrough
         {
@@ -190,20 +191,21 @@ namespace LiveSplit.View
 
             ComponentManager.BasePath = BasePath;
 
-            SpeedRunsLiveAPI.Instance.RacesRefreshed += SRL_RacesRefreshed;
-            SpeedRunsLiveAPI.Instance.RefreshRacesListAsync();
-
             CurrentState = new LiveSplitState(null, this, null, null, null);
 
             ComparisonGeneratorsFactory = new StandardComparisonGeneratorsFactory();
 
             Model = new DoubleTapPrevention(new TimerModel());
 
+            ComponentManager.RaceProviderFactories = ComponentManager.LoadAllFactories<IRaceProviderFactory>();
+            ComponentManager.RaceProviderFactories["SRL"] = new SRLFactory();
             RunFactory = new StandardFormatsRunFactory();
             RunSaver = new XMLRunSaver();
             LayoutSaver = new XMLLayoutSaver();
             SettingsSaver = new XMLSettingsSaver();
             LoadSettings();
+
+            UpdateRaceProviderIntegration();
 
             CurrentState.CurrentHotkeyProfile = Settings.HotkeyProfiles.First().Key;
 
@@ -218,18 +220,18 @@ namespace LiveSplit.View
             {
                 if (!string.IsNullOrEmpty(splitsPath))
                 {
-                    run = LoadRunFromFile(splitsPath, TimingMethod.RealTime, CurrentState.CurrentHotkeyProfile);
+                    UpdateStateFromSplitsPath(splitsPath);
+
+                    run = LoadRunFromFile(splitsPath);
                 }
                 else if (Settings.RecentSplits.Count > 0)
                 {
                     var lastSplitFile = Settings.RecentSplits.Last();
                     if (!string.IsNullOrEmpty(lastSplitFile.Path))
                     {
-                        CurrentState.CurrentTimingMethod = lastSplitFile.LastTimingMethod;
-                        if (Settings.HotkeyProfiles.ContainsKey(lastSplitFile.LastHotkeyProfile))
-                            CurrentState.CurrentHotkeyProfile = lastSplitFile.LastHotkeyProfile;
+                        UpdateStateFromSplitsPath(lastSplitFile.Path);
 
-                        run = LoadRunFromFile(lastSplitFile.Path, lastSplitFile.LastTimingMethod, lastSplitFile.LastHotkeyProfile);
+                        run = LoadRunFromFile(lastSplitFile.Path);
                     }
                 }
             }
@@ -300,7 +302,7 @@ namespace LiveSplit.View
 
             InvalidationRequired = false;
 
-            Hook = new CompositeHook();
+            Hook = new CompositeHook(false);
             Hook.GamepadHookInitialized += Hook_GamepadHookInitialized;
             Hook.KeyOrButtonPressed += hook_KeyOrButtonPressed;
             Settings.RegisterHotkeys(Hook, CurrentState.CurrentHotkeyProfile);
@@ -314,6 +316,64 @@ namespace LiveSplit.View
             Server.Start();
 
             new System.Timers.Timer(1000) { Enabled = true }.Elapsed += RaceRefreshTimer_Elapsed;
+
+            InitDragAndDrop();
+        }
+
+        private void InitDragAndDrop()
+        {
+            AllowDrop = true;
+            DragDrop += TimerForm_DragDrop;
+            DragEnter += TimerForm_DragEnter;
+        }
+
+        void UpdateRaceProviderIntegration()
+        {
+            if (RightClickMenu.InvokeRequired)
+            {
+                RightClickMenu.Invoke(new Action(UpdateRaceProviderIntegration), null);
+                return;
+            }
+
+            int menuItemIndex = RightClickMenu.Items.IndexOf(shareMenuItem);
+            int firstRaceProvider = menuItemIndex + 1;
+            int lastRaceProvider = RightClickMenu.Items.IndexOfKey("endRaceSection")-1;
+            if (lastRaceProvider-firstRaceProvider >= 0)
+            {
+                for (int i = 0; i < (lastRaceProvider - firstRaceProvider) + 1; i++)
+                {
+                    RightClickMenu.Items[firstRaceProvider].Tag = null;
+                    RightClickMenu.Items[firstRaceProvider].MouseHover -= racingMenuItem_MouseHover;
+                    RightClickMenu.Items[firstRaceProvider].MouseLeave -= racingMenuItem_MouseLeave;
+                    RightClickMenu.Items.RemoveAt(firstRaceProvider);
+                }
+            }
+                       
+            RaceProvider = ComponentManager.RaceProviderFactories.Select(x => x.Value.Create(Model, Settings.RaceProvider.FirstOrDefault(y => y.Name == x.Key)));           
+            foreach (var raceProvider in RaceProvider.Reverse())
+            {
+                if (Settings.RaceProvider.Any(x => x.DisplayName == raceProvider.ProviderName && !x.Enabled))
+                    continue;
+               
+                raceProvider.RacesRefreshedCallback = RacesRefreshed;
+                ToolStripMenuItem raceProviderItem = new ToolStripMenuItem()
+                {
+                    Name = $"{raceProvider.ProviderName}racesMenuItem",
+                    Text = $"{raceProvider.ProviderName} Races",
+					Tag = raceProvider
+                };
+                raceProviderItem.MouseHover += racingMenuItem_MouseHover;
+                raceProviderItem.MouseLeave += racingMenuItem_MouseLeave;
+                RightClickMenu.Items.Insert(menuItemIndex + 1, raceProviderItem);
+                raceProvider.RefreshRacesListAsync();
+            }
+            var srlRaceProvider = RaceProvider.FirstOrDefault(x => x.ProviderName == "SRL");
+            if (srlRaceProvider != null)
+            {
+                srlRaceProvider.JoinRace = SRL_JoinRace;
+                srlRaceProvider.CreateRace = SRL_NewRace;
+            }
+            
         }
 
         void SetWindowTitle()
@@ -377,8 +437,12 @@ namespace LiveSplit.View
             }
         }
 
-        void SRL_RacesRefreshed(object sender, EventArgs e)
+        void RacesRefreshed(RaceProviderAPI raceProvider)
         {
+            ToolStripMenuItem racingMenuItem = RightClickMenu.Items.Find($"{raceProvider.ProviderName}racesMenuItem", false).FirstOrDefault() as ToolStripMenuItem;
+            if (racingMenuItem == null)
+                return;
+
             Action<ToolStripItem> addItem = null;
             Action clear = null;
 
@@ -387,6 +451,10 @@ namespace LiveSplit.View
                 if (InvokeRequired)
                 {
                     Invoke(addItem, x);
+                }
+                else if (RightClickMenu.InvokeRequired)
+                {
+                    RightClickMenu.Invoke(addItem, x);
                 }
                 else
                 {
@@ -399,6 +467,10 @@ namespace LiveSplit.View
                 {
                     Invoke(clear);
                 }
+                else if (RightClickMenu.InvokeRequired)
+                {
+                    RightClickMenu.Invoke(clear);
+                }
                 else
                 {
                     RacesToRefresh.Clear();
@@ -408,98 +480,84 @@ namespace LiveSplit.View
 
             clear();
 
-            foreach (var race in SpeedRunsLiveAPI.Instance.GetRaces())
+            foreach (var race in raceProvider.GetRaces())
             {
-                if (race.state != 1)
+                if (race.State != 1)
                     continue;
 
-                var gameAndGoal = GetShortenedGameAndGoal(string.Format("{0} - {1}", race.game.name, race.goal));
-                var entrants = race.numentrants;
+                var gameAndGoal = GetShortenedGameAndGoal(string.Format("{0} - {1}", race.GameName, race.Goal));
+                var entrants = race.NumEntrants;
                 var plural = entrants == 1 ? "" : "s";
                 var title = string.Format("{0} ({1} Entrant{2})", gameAndGoal, entrants, plural) as string;
 
                 var item = new ToolStripMenuItem();
                 item.Text = title.EscapeMenuItemText();
-                item.Tag = race.id;
-                item.Click += Race_Click;
+                item.Tag = race.Id;
+                item.Click += (s, e) => { raceProvider.JoinRace?.Invoke(Model, race.Id); };
                 addItem(item);
 
-                SetGameImage(item, race);
+                SetGameImage(raceProvider, item, race);
             }
 
             if (racingMenuItem.DropDownItems.Count > 0)
                 addItem(new ToolStripSeparator());
 
-            foreach (var race in SpeedRunsLiveAPI.Instance.GetRaces())
+            foreach (var race in raceProvider.GetRaces())
             {
-                if (race.state != 3)
+                if (race.State != 3)
                     continue;
 
-                var gameAndGoal = GetShortenedGameAndGoal(string.Format("{0} - {1}", race.game.name, race.goal));
-                var entrants = race.numentrants;
+                var gameAndGoal = GetShortenedGameAndGoal(string.Format("{0} - {1}", race.GameName, race.Goal));
                 var startTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-                startTime = startTime.AddSeconds(race.time);
-
-                var finishedCount = 0;
-                var forfeitedCount = 0;
-                foreach (var entrant in race.entrants.Properties.Values)
-                {
-                    if (entrant.time >= 0)
-                        finishedCount++;
-                    if (entrant.statetext == "Forfeit")
-                        forfeitedCount++;
-                }
+                startTime = startTime.AddSeconds(race.Starttime);
 
                 var tsItem = new ToolStripMenuItem();
 
                 Action updateTitleAction = null;
                 updateTitleAction = () =>
+                {
+                    if (InvokeRequired)
                     {
-                        if (InvokeRequired)
-                        {
-                            if (!IsDisposed)
-                            {
-                                try
-                                {
-                                    Invoke(updateTitleAction);
-                                }
-                                catch { }
-                            }
-                        }
-                        else
+                        if (!IsDisposed)
                         {
                             try
                             {
-                                var timeSpan = TimeStamp.CurrentDateTime - startTime;
-                                if (timeSpan < TimeSpan.Zero)
-                                    timeSpan = TimeSpan.Zero;
-                                var time = new RegularTimeFormatter().Format(timeSpan);
-                                var title = string.Format("[{0}] {1} ({2}/{3} Finished)", time, gameAndGoal, finishedCount, entrants - forfeitedCount) as string;
-                                tsItem.Text = title.EscapeMenuItemText();
+                                Invoke(updateTitleAction);
                             }
                             catch { }
                         }
-                    };
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var timeSpan = TimeStamp.CurrentDateTime - startTime;
+                            if (timeSpan < TimeSpan.Zero)
+                                timeSpan = TimeSpan.Zero;
+                            var time = new RegularTimeFormatter().Format(timeSpan);
+                            var title = string.Format("[{0}] {1} ({2}/{3} Finished)", time, gameAndGoal, race.Finishes, race.NumEntrants - race.Forfeits) as string;
+                            tsItem.Text = title.EscapeMenuItemText();
+                        }
+                        catch { }
+                    }
+                };
 
-                SetGameImage(tsItem, race);
+                SetGameImage(raceProvider, tsItem, race);
 
                 updateTitleAction();
 
                 RacesToRefresh.Add(updateTitleAction);
 
                 tsItem.Click += (s, ev) =>
+                {
+                    if (!race.IsParticipant(raceProvider.Username))
+                        Settings.RaceViewer.ShowRace(race);
+                    else
                     {
-                        ShareSettings.Default.Reload();
-                        var username = WebCredentials.SpeedRunsLiveIRCCredentials.Username;
-                        var racers = ((IEnumerable<string>)race.entrants.Properties.Keys).Select(x => x.ToLower());
-                        if (!racers.Contains((username ?? "").ToLower()))
-                            Settings.RaceViewer.ShowRace(race);
-                        else
-                        {
-                            tsItem.Tag = race.id;
-                            Race_Click(tsItem, null);
-                        }
-                    };
+                        tsItem.Tag = race.Id;
+                        raceProvider.JoinRace?.Invoke(Model, race.Id);
+                    }
+                };
 
                 addItem(tsItem);
             }
@@ -509,17 +567,17 @@ namespace LiveSplit.View
 
             var newRaceItem = new ToolStripMenuItem();
             newRaceItem.Text = "New Race...";
-            newRaceItem.Click += NewRace_Click;
+            newRaceItem.Click += (s, e) => { raceProvider.CreateRace?.Invoke(Model); };
             addItem(newRaceItem);
         }
 
-        void SetGameImage(ToolStripMenuItem item, dynamic race)
+        void SetGameImage(RaceProviderAPI raceProvider, ToolStripMenuItem item, IRaceInfo race)
         {
             Task.Factory.StartNew(() =>
             {
                 try
                 {
-                    var image = SpeedRunsLiveAPI.Instance.GetGameImage(race.game.abbrev);
+                    var image = raceProvider.GetGameImage(race.GameId);
                     this.InvokeIfRequired(() =>
                     {
                         try
@@ -533,19 +591,18 @@ namespace LiveSplit.View
             });
         }
 
-        void Race_Click(object sender, EventArgs e)
+        void SRL_JoinRace(ITimerModel model, string raceId)
         {
             if (ShowSRLRules())
             {
-                var raceId = (sender as ToolStripMenuItem).Tag.ToString();
-                var form = new SpeedRunsLiveForm(CurrentState, Model, raceId);
+                var form = new SpeedRunsLiveForm(CurrentState, model, raceId);
                 TopMost = false;
                 form.Show(this);
                 TopMost = CurrentState.LayoutSettings.AlwaysOnTop;
             }
         }
 
-        void NewRace_Click(object sender, EventArgs e)
+        void SRL_NewRace(ITimerModel model)
         {
             if (ShowSRLRules())
             {
@@ -563,7 +620,7 @@ namespace LiveSplit.View
                         gameCategory = gameName + " - " + gameCategory;
                         gameName = "New Game";
                     }
-                    var form = new SpeedRunsLiveForm(CurrentState, Model, gameName, id, gameCategory);
+                    var form = new SpeedRunsLiveForm(CurrentState, model, gameName, id, gameCategory);
                     form.Show(this);
                 }
                 TopMost = CurrentState.LayoutSettings.AlwaysOnTop;
@@ -604,6 +661,7 @@ namespace LiveSplit.View
                             new LiveSplitUpdateable(),
                             UpdateManagerUpdateable.Instance }
                             .Concat(ComponentManager.ComponentFactories.Values)
+                            .Concat(ComponentManager.RaceProviderFactories.Values)
                             .ToArray());
         }
 
@@ -750,18 +808,7 @@ namespace LiveSplit.View
                         menuItem.Tag = "FileName";
                         menuItem.Click += (x, y) =>
                         {
-                            var previousMethod = CurrentState.CurrentTimingMethod;
-                            CurrentState.CurrentTimingMethod = splitsFile.LastTimingMethod;
-
-                            var previousHotkeyProfile = CurrentState.CurrentHotkeyProfile;
-                            if (Settings.HotkeyProfiles.ContainsKey(splitsFile.LastHotkeyProfile))
-                            {
-                                CurrentState.CurrentHotkeyProfile = splitsFile.LastHotkeyProfile;
-                                Settings.UnregisterAllHotkeys(Hook);
-                                Settings.RegisterHotkeys(Hook, CurrentState.CurrentHotkeyProfile);
-                            }
-
-                            OpenRunFromFile(splitsFile.Path, previousMethod, previousHotkeyProfile);
+                            OpenRunFromFile(splitsFile.Path);
                         };
                         categoryMenuItem.DropDownItems.Add(menuItem);
                     }
@@ -1088,14 +1135,14 @@ namespace LiveSplit.View
 
         void pauseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            Model.Pause();
             ((System.Timers.Timer)sender).Stop();
+            Model.Pause();
         }
 
         void splitTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            StartOrSplit();
             ((System.Timers.Timer)sender).Stop();
+            StartOrSplit();
         }
 
         void RefreshTimerWorker()
@@ -1671,7 +1718,7 @@ namespace LiveSplit.View
                 AddSplitsFileToLRU(CurrentState.Run.FilePath, CurrentState.Run, lastTimingMethod, lastHotkeyProfile);
         }
 
-        private IRun LoadRunFromFile(string filePath, TimingMethod previousTimingMethod, string previousHotkeyProfile)
+        private IRun LoadRunFromFile(string filePath, TimingMethod? previousTimingMethod = null, string previousHotkeyProfile = null)
         {
             IRun run;
 
@@ -1683,7 +1730,9 @@ namespace LiveSplit.View
                 run = RunFactory.Create(ComparisonGeneratorsFactory);
             }
 
-            AddCurrentSplitsToLRU(previousTimingMethod, previousHotkeyProfile);
+            if (previousTimingMethod.HasValue && previousHotkeyProfile != null)
+                AddCurrentSplitsToLRU(previousTimingMethod.Value, previousHotkeyProfile);
+
             AddSplitsFileToLRU(filePath, run, CurrentState.CurrentTimingMethod, CurrentState.CurrentHotkeyProfile);
 
             return run;
@@ -1700,7 +1749,7 @@ namespace LiveSplit.View
             }
         }
 
-        private void OpenRunFromFile(string filePath, TimingMethod previousTimingMethod, string previousHotkeyProfile)
+        private void OpenRunFromFile(string filePath)
         {
             Cursor.Current = Cursors.WaitCursor;
             try
@@ -1709,6 +1758,11 @@ namespace LiveSplit.View
                     return;
                 if (!WarnAndRemoveTimerOnly(true))
                     return;
+
+                var previousTimingMethod = CurrentState.CurrentTimingMethod;
+                var previousHotkeyProfile = CurrentState.CurrentHotkeyProfile;
+
+                UpdateStateFromSplitsPath(filePath);
 
                 var run = LoadRunFromFile(filePath, previousTimingMethod, previousHotkeyProfile);
                 SetRun(run);
@@ -1724,6 +1778,24 @@ namespace LiveSplit.View
             Cursor.Current = Cursors.Arrow;
         }
 
+        private void UpdateStateFromSplitsPath(string filePath)
+        {
+            var recentSplitsFile = Settings.RecentSplits.LastOrDefault(splitsFile => splitsFile.Path == filePath);
+            if (recentSplitsFile.Path != null)
+            {
+                CurrentState.CurrentTimingMethod = recentSplitsFile.LastTimingMethod;
+                if (Settings.HotkeyProfiles.ContainsKey(recentSplitsFile.LastHotkeyProfile))
+                {
+                    CurrentState.CurrentHotkeyProfile = recentSplitsFile.LastHotkeyProfile;
+                    if (Hook != null)
+                    {
+                        Settings.UnregisterAllHotkeys(Hook);
+                        Settings.RegisterHotkeys(Hook, CurrentState.CurrentHotkeyProfile);
+                    }
+                }
+            }
+        }
+
         private void OpenSplits()
         {
             using (var splitDialog = new OpenFileDialog())
@@ -1736,7 +1808,7 @@ namespace LiveSplit.View
                     var result = splitDialog.ShowDialog(this);
                     if (result == DialogResult.OK)
                     {
-                        OpenRunFromFile(splitDialog.FileName, CurrentState.CurrentTimingMethod, CurrentState.CurrentHotkeyProfile);
+                        OpenRunFromFile(splitDialog.FileName);
                     }
                 }
                 finally
@@ -2218,6 +2290,8 @@ namespace LiveSplit.View
             if (needToChangeLayout && !WarnUserAboutLayoutSave(true))
                 return;
 
+            AddCurrentSplitsToLRU(CurrentState.CurrentTimingMethod, CurrentState.CurrentHotkeyProfile);
+
             var run = new StandardRunFactory().Create(ComparisonGeneratorsFactory);
             Model.Reset();
             SetRun(run);
@@ -2417,6 +2491,7 @@ namespace LiveSplit.View
                     CurrentState.CurrentHotkeyProfile = editor.SelectedHotkeyProfile;
                 }
                 Settings.RegisterHotkeys(Hook, CurrentState.CurrentHotkeyProfile);
+                UpdateRaceProviderIntegration();
             }
             finally
             {
@@ -2558,7 +2633,8 @@ namespace LiveSplit.View
 
         private void racingMenuItem_MouseHover(object sender, EventArgs e)
         {
-            SpeedRunsLiveAPI.Instance.RefreshRacesListAsync();
+            RaceProviderAPI raceProvider = (RaceProviderAPI)(sender as ToolStripMenuItem)?.Tag;
+            raceProvider?.RefreshRacesListAsync();
             ShouldRefreshRaces = true;
         }
 
@@ -2779,6 +2855,46 @@ namespace LiveSplit.View
         private void TimerForm_ResizeEnd(object sender, EventArgs e)
         {
             ResizingInitialAspectRatio = null;
+        }
+
+        private void TimerForm_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetData(DataFormats.FileDrop, false) is string[] fileList)
+            {
+                var lssOpened = false;
+                var lslOpened = false;
+
+                foreach (string fileToOpen in fileList)
+                {
+                    if (File.Exists(fileToOpen))
+                    {
+                        var extension = Path.GetExtension(fileToOpen).ToLower();
+
+                        if (!lslOpened && extension == ".lsl")
+                        {
+                            lslOpened = true;
+                            OpenLayoutFromFile(fileToOpen);
+                        }
+                        else if (!lssOpened)
+                        {
+                            lssOpened = true;
+                            OpenRunFromFile(fileToOpen);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void TimerForm_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
         }
     }
 }

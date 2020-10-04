@@ -1,9 +1,11 @@
 ﻿using LiveSplit.Model;
 using LiveSplit.Model.Comparisons;
 using LiveSplit.Model.Input;
+using LiveSplit.UI.Components;
 using LiveSplit.Web.SRL.RaceViewers;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Linq;
 
 namespace LiveSplit.Options.SettingsFactories
 {
@@ -28,6 +30,7 @@ namespace LiveSplit.Options.SettingsFactories
                             GlobalHotkeysEnabled = false,
                             DeactivateHotkeysForOtherPrograms = false,
                             DoubleTapPrevention = true,
+                            AllowGamepadsAsHotkeys = true,
                             HotkeyDelay = 0f
                         }
                     }
@@ -37,6 +40,7 @@ namespace LiveSplit.Options.SettingsFactories
                 RaceViewer = new SRLRaceViewer(),
                 AgreedToSRLRules = false,
                 SimpleSumOfBest = false,
+                RaceProvider = ComponentManager.RaceProviderFactories.Values.ToList().Select(x => x.CreateSettings()).ToList(),
                 ComparisonGeneratorStates = new Dictionary<string, bool>()
                 {
                     { BestSegmentsComparisonGenerator.ComparisonName, true },

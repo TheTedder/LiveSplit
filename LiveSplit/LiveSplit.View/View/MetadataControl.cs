@@ -34,7 +34,7 @@ namespace LiveSplit.View
                 set
                 {
                     var choice = Variable.Values.FirstOrDefault(x => x.Value == value);
-                    string variableValue = string.Empty;
+                    string variableValue = null;
                     if (choice == null)
                     {
                         if (Variable.IsUserDefined)
@@ -45,12 +45,16 @@ namespace LiveSplit.View
                         variableValue = choice.Value;
                     }
                     if (Metadata.VariableValueNames.ContainsKey(Variable.Name))
-                        Metadata.VariableValueNames[Variable.Name] = variableValue;
-                    else
+                    {
+                        if (variableValue == null)
+                            Metadata.VariableValueNames.Remove(Variable.Name);
+                        else
+                            Metadata.VariableValueNames[Variable.Name] = variableValue;
+                    }
+                    else if (variableValue != null)
                         Metadata.VariableValueNames.Add(Variable.Name, variableValue);
 
-                    if (VariableChanged != null)
-                        VariableChanged(this, new MetadataChangedEventArgs(true));
+                    VariableChanged?.Invoke(this, new MetadataChangedEventArgs(true));
                 }
             }
         }
@@ -122,8 +126,8 @@ namespace LiveSplit.View
                 cmbPlatform.Items.Add(string.Empty);
                 cmbRegion.Items.AddRange(Metadata.Game.Regions.Select(x => x.Name).ToArray());
                 cmbPlatform.Items.AddRange(Metadata.Game.Platforms.Select(x => x.Name).ToArray());
-                cmbRegion.DataBindings.Add("SelectedItem", Metadata, "RegionName", false, DataSourceUpdateMode.OnPropertyChanged);
-                cmbPlatform.DataBindings.Add("SelectedItem", Metadata, "PlatformName", false, DataSourceUpdateMode.OnPropertyChanged);
+                cmbRegion.DataBindings.Add("SelectedItem", Metadata, "RegionName");
+                cmbPlatform.DataBindings.Add("SelectedItem", Metadata, "PlatformName");
                 refreshRules();
 
                 var controlIndex = 0;
@@ -187,7 +191,8 @@ namespace LiveSplit.View
                     };
                     variableBinding.VariableChanged += Metadata_Changed;
 
-                    variableComboBox.DataBindings.Add("Text", variableBinding, "Value", false, DataSourceUpdateMode.OnPropertyChanged);
+                    variableComboBox.DataBindings.Add("Text", variableBinding, "Value");
+                    variableComboBox.SelectedIndexChanged += VariableComboBox_SelectedIndexChanged;
 
                     dynamicControls.Add(variableLabel);
                     dynamicControls.Add(variableComboBox);
@@ -358,6 +363,23 @@ namespace LiveSplit.View
                     RefreshAssociateButton();
                 }
             }
+        }
+
+        private void cmbRegion_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Metadata.RegionName = cmbRegion.SelectedItem.ToString();
+        }
+
+        private void cmbPlatform_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Metadata.PlatformName = cmbPlatform.SelectedItem.ToString();
+        }
+
+        private void VariableComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var variableComboBox = (ComboBox)sender;
+            var variableBinding = (VariableBinding)variableComboBox.DataBindings[0].DataSource;
+            variableBinding.Value = variableComboBox.SelectedItem.ToString();
         }
     }
 }
