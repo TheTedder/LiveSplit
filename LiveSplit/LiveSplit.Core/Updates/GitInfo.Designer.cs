@@ -19,7 +19,7 @@ namespace LiveSplit.Updates {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class GitInfo {
@@ -61,7 +61,7 @@ namespace LiveSplit.Updates {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to pr/1386
+        ///   Looks up a localized string similar to mono-tools
         ///.
         /// </summary>
         public static string branch {
@@ -71,7 +71,7 @@ namespace LiveSplit.Updates {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 9b51b37a8be6f209c2c3874554b798e841657609
+        ///   Looks up a localized string similar to a6d468690b708aa564f583ada8678107bc43276e
         ///.
         /// </summary>
         public static string revision {
@@ -81,7 +81,7 @@ namespace LiveSplit.Updates {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 1.7.4-577-g9b51b37-dirty
+        ///   Looks up a localized string similar to 1.8.7-49-ga6d4686-dirty
         ///.
         /// </summary>
         public static string version {
