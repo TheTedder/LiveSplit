@@ -326,7 +326,7 @@
             <URL>https://raw.githubusercontent.com/G-e-n-e-v-e-n-s-i-S/Metal-Slug-1-AutoSplitter/master/Metal%20Slug%201%20-%20AutoSplitter.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>AutoSplitter for Steam and WinKawaks. (By GenevensiS)</Description>
+        <Description>AutoSplitter for Steam, FightCade, and WinKawaks. (By GenevensiS)</Description>
         <Website>https://docs.google.com/document/d/1eHHgkXpr-WuTCXJB1t4R4eEcb98C_ocJdUmo-OdUv70/edit?usp=sharing</Website>
     </AutoSplitter>
     <AutoSplitter>
@@ -337,7 +337,7 @@
             <URL>https://raw.githubusercontent.com/G-e-n-e-v-e-n-s-i-S/Metal-Slug-2-AutoSplitter/master/Metal%20Slug%202%20-%20AutoSplitter.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>AutoSplitter for Steam and WinKawaks. (By GenevensiS)</Description>
+        <Description>AutoSplitter for Steam, FightCade, and WinKawaks. (By GenevensiS)</Description>
         <Website>https://docs.google.com/document/d/1eHHgkXpr-WuTCXJB1t4R4eEcb98C_ocJdUmo-OdUv70/edit?usp=sharing</Website>
     </AutoSplitter>
     <AutoSplitter>
@@ -348,7 +348,7 @@
             <URL>https://raw.githubusercontent.com/G-e-n-e-v-e-n-s-i-S/Metal-Slug-3-AutoSplitter/master/Metal%20Slug%203%20-%20AutoSplitter.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>AutoSplitter for Steam and WinKawaks. (By GenevensiS)</Description>
+        <Description>AutoSplitter for Steam, FightCade, and WinKawaks. (By GenevensiS)</Description>
         <Website>https://docs.google.com/document/d/1eHHgkXpr-WuTCXJB1t4R4eEcb98C_ocJdUmo-OdUv70/edit?usp=sharing</Website>
     </AutoSplitter>
     <AutoSplitter>
@@ -359,7 +359,7 @@
             <URL>https://raw.githubusercontent.com/G-e-n-e-v-e-n-s-i-S/Metal-Slug-4-AutoSplitter/master/Metal%20Slug%204%20-%20AutoSplitter.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>AutoSplitter for WinKawaks. (By GenevensiS)</Description>
+        <Description>AutoSplitter for FightCade and WinKawaks. (By GenevensiS)</Description>
         <Website>https://docs.google.com/document/d/1eHHgkXpr-WuTCXJB1t4R4eEcb98C_ocJdUmo-OdUv70/edit?usp=sharing</Website>
     </AutoSplitter>
     <AutoSplitter>
@@ -370,7 +370,7 @@
             <URL>https://raw.githubusercontent.com/G-e-n-e-v-e-n-s-i-S/Metal-Slug-5-AutoSplitter/master/Metal%20Slug%205%20-%20AutoSplitter.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>AutoSplitter for WinKawaks. (By GenevensiS)</Description>
+        <Description>AutoSplitter for FightCade and WinKawaks. (By GenevensiS)</Description>
         <Website>https://docs.google.com/document/d/1eHHgkXpr-WuTCXJB1t4R4eEcb98C_ocJdUmo-OdUv70/edit?usp=sharing</Website>
     </AutoSplitter>
     <AutoSplitter>
@@ -381,7 +381,7 @@
             <URL>https://raw.githubusercontent.com/G-e-n-e-v-e-n-s-i-S/Metal-Slug-X-AutoSplitter/master/Metal%20Slug%20X%20-%20AutoSplitter.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>AutoSplitter for Steam and WinKawaks. (By GenevensiS)</Description>
+        <Description>AutoSplitter for Steam, FightCade, and WinKawaks. (By GenevensiS)</Description>
         <Website>https://docs.google.com/document/d/1eHHgkXpr-WuTCXJB1t4R4eEcb98C_ocJdUmo-OdUv70/edit?usp=sharing</Website>
     </AutoSplitter>
     <AutoSplitter>
@@ -2790,10 +2790,10 @@
             <Game>Dark Souls II - SotFS</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/JMaynard24/ASL/master/DarkSouls2.asl</URL>
+            <URL>https://raw.githubusercontent.com/rythin-sr/ASL-Scripts/master/DarkSoulsII.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>Load Removal is available. (By Dread)</Description>
+        <Description>Autosplitting and Load Removal is available. (By Dread, rythin)</Description>
     </AutoSplitter>
     <AutoSplitter>
         <Games>
@@ -4087,11 +4087,11 @@
             <Game>Pokemon Trading Card Game</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/nhwangbo/ASLScripts/master/LiveSplit.PkmnTCG/LiveSplit.PkmnTCG.asl</URL>
+            <URL>https://raw.githubusercontent.com/hwangbro/ASLScripts/master/LiveSplit.PkmnTCG/LiveSplit.PkmnTCG.asl</URL>
         </URLs>
         <Type>Script</Type>
         <Description>Auto Splitting and Auto Start/Reset are available on GSR. (By Hwangbro)</Description>
-        <Website>https://github.com/nhwangbo/ASLScripts/tree/master/LiveSplit.PkmnTCG</Website>
+        <Website>https://github.com/hwangbro/ASLScripts/tree/master/LiveSplit.PkmnTCG</Website>
     </AutoSplitter>
     <AutoSplitter>
         <Games>
@@ -4133,11 +4133,11 @@
             <Game>Pokemon Red ++</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/nhwangbo/ASLScripts/master/LiveSplit.PkmnRed%2B%2B/LiveSplit.PkmnRed%2B%2B.asl</URL>
+            <URL>https://raw.githubusercontent.com/hwangbro/ASLScripts/master/LiveSplit.PkmnRed%2B%2B/LiveSplit.PkmnRed%2B%2B.asl</URL>
         </URLs>
         <Type>Script</Type>
         <Description>Auto Splitting and Auto Start/Reset are available on GSR. (By Hwangbro)</Description>
-        <Website>https://github.com/nhwangbo/ASLScripts/tree/master/LiveSplit.PkmnRed%2B%2B</Website>
+        <Website>https://github.com/hwangbro/ASLScripts/tree/master/LiveSplit.PkmnRed%2B%2B</Website>
     </AutoSplitter>
     <AutoSplitter>
         <Games>
@@ -4145,11 +4145,11 @@
             <Game>Pokemon Yellow</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/nhwangbo/ASLScripts/master/LiveSplit.PkmnYellow/LiveSplit.PkmnYellow.asl</URL>
+            <URL>https://raw.githubusercontent.com/hwangbro/ASLScripts/master/LiveSplit.PkmnYellow/LiveSplit.PkmnYellow.asl</URL>
         </URLs>
         <Type>Script</Type>
         <Description>Auto Splitting and Auto Start/Reset are available on GSR. (By Hwangbro)</Description>
-        <Website>https://github.com/nhwangbo/ASLScripts/tree/master/LiveSplit.PkmnYellow</Website>
+        <Website>https://github.com/hwangbro/ASLScripts/tree/master/LiveSplit.PkmnYellow</Website>
     </AutoSplitter>
     <AutoSplitter>
         <Games>
@@ -4161,11 +4161,11 @@
             <Game>Pokemon Gold/Silver</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/nhwangbo/ASLScripts/master/LiveSplit.PkmnGold/LiveSplit.PkmnGold.asl</URL>
+            <URL>https://raw.githubusercontent.com/hwangbro/ASLScripts/master/LiveSplit.PkmnGold/LiveSplit.PkmnGold.asl</URL>
         </URLs>
         <Type>Script</Type>
         <Description>Auto Splitting is available on GSR. (By Hwangbro)</Description>
-        <Website>https://github.com/nhwangbo/ASLScripts/tree/master/LiveSplit.PkmnGold</Website>
+        <Website>https://github.com/hwangbro/ASLScripts/tree/master/LiveSplit.PkmnGold</Website>
     </AutoSplitter>
     <AutoSplitter>
         <Games>
@@ -4173,11 +4173,11 @@
             <Game>Pokemon Crystal</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/nhwangbo/ASLScripts/master/LiveSplit.PkmnCrystal/LiveSplit.PkmnCrystal.asl</URL>
+            <URL>https://raw.githubusercontent.com/hwangbro/ASLScripts/master/LiveSplit.PkmnCrystal/LiveSplit.PkmnCrystal.asl</URL>
         </URLs>
         <Type>Script</Type>
         <Description>Auto Splitting is available on GSR. (By Hwangbro)</Description>
-        <Website>https://github.com/nhwangbo/ASLScripts/tree/master/LiveSplit.PkmnCrystal</Website>
+        <Website>https://github.com/hwangbro/ASLScripts/tree/master/LiveSplit.PkmnCrystal</Website>
     </AutoSplitter>
     <AutoSplitter>
         <Games>
@@ -6379,6 +6379,7 @@
     <AutoSplitter>
         <Games>
             <Game>VVVVVV</Game>
+            <Game>VVVVVV Category Extensions</Game>
         </Games>
         <URLs>
             <URL>https://raw.githubusercontent.com/tzann/Autosplitters/master/LiveSplit.VVVVVV.asl</URL>
@@ -10597,10 +10598,10 @@
             <Game>Pitfall: The Lost Expedition</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/Avasam/PITFALL-The-Lost-Expedition-AutoSplitter/main/Pitfall-TLE.asl</URL>
+            <URL>https://raw.githubusercontent.com/Avasam/Avasam.AutoSplitters/main/Pitfall%20The%20Lost%20Expedition/Pitfall-TLE.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>PC Autosplitter and Load Remover (By Avasam)</Description>
+        <Description>PC AutoSplitter and Load Remover (By Avasam)</Description>
     	<Website>https://discord.com/invite/NEVJPZk</Website>
     </AutoSplitter>
     <AutoSplitter>
@@ -10863,11 +10864,11 @@
             <Game>RiME</Game>
         </Games>
         <URLs>
-            <URL>https://raw.githubusercontent.com/Avasam/RiME-AutoSplitter/main/RiME.asl</URL>
+            <URL>https://raw.githubusercontent.com/Avasam/Avasam.AutoSplitters/main/RiME/RiME.asl</URL>
         </URLs>
         <Type>Script</Type>
-        <Description>Autosplitter (By Avasam). Click Website for the README</Description>
-        <Website>https://github.com/Avasam/RiME-AutoSplitter/blob/main/README.md</Website>
+        <Description>AutoSplitter (By Avasam). Click Website for the README</Description>
+        <Website>https://github.com/Avasam/Avasam.AutoSplitters/blob/main/RiME/README.md</Website>
     </AutoSplitter>
 	<AutoSplitter>
         <Games>
@@ -11196,4 +11197,71 @@
 		<Type>Script</Type>
 		<Description>Autosplitter with LRT by Mysterion_06_</Description>
 	</AutoSplitter>
+    <AutoSplitter>
+        <Games>
+            <Game>WitchWay</Game>
+        </Games>
+        <URLs>
+            <URL>https://raw.githubusercontent.com/Avasam/Avasam.AutoSplitters/main/WitchWay/WitchWay.asl</URL>
+        </URLs>
+        <Type>Script</Type>
+        <Description>AutoSplitter (By Avasam). Start Timer at 0.85</Description>
+    	<Website>https://www.speedrun.com/witchway</Website>
+    </AutoSplitter>
+    <AutoSplitter>
+        <Games>
+            <Game>Mappy-Land</Game>
+        </Games>
+        <URLs>
+            <URL>https://raw.githubusercontent.com/Avasam/Avasam.AutoSplitters/main/Mappy-Land/MappyLand.asl</URL>
+        </URLs>
+        <Type>Script</Type>
+        <Description>AutoSplitter for Mesen, FCEUX 2.2.3 and Nestopia (By Avasam).</Description>
+    	<Website>https://www.speedrun.com/mappy_land</Website>
+    </AutoSplitter>
+    <AutoSplitter>
+        <Games>
+            <Game>Harry Potter and the Goblet of Fire (PC)</Game>
+	    <Game>Harry Potter and the Goblet of Fire</Game>
+	    <Game>Harry Potter 4</Game>
+	    <Game>HP4</Game>
+        </Games>
+        <URLs>
+            <URL>https://raw.githubusercontent.com/marczeslaw11/LoadRemovers/master/HP4_AutoSplitter.asl</URL>
+        </URLs>
+        <Type>Script</Type>
+        <Description>AutoSplitter and Load Remover by Flo203 and Marczeslaw</Description>
+    </AutoSplitter>
+    <AutoSplitter>
+        <Games>
+            <Game>HROT</Game>
+        </Games>
+        <URLs>
+            <URL>https://raw.githubusercontent.com/thekovic/HROT-AutoSplitter/main/HROTAutoSplit.asl</URL>
+        </URLs>
+        <Type>Script</Type>
+        <Description>AutoSplit, AutoStart and AutoReset (by the_kovic and 2838)</Description>
+    </AutoSplitter>
+    <AutoSplitter>
+        <Games>
+            <Game>Outer Wilds</Game>
+        </Games>
+        <URLs>
+            <URL>https://raw.githubusercontent.com/sseneca42/Outer-Wilds-Autosplitter/main/OW_Autosplitter.asl</URL>
+        </URLs>
+        <Type>Script</Type>
+        <Description>Load Remover &amp; AutoSplitter (by Nepo)</Description>
+	<Website>https://github.com/sseneca42/Outer-Wilds-Autosplitter/blob/main/README.md</Website>
+    </AutoSplitter>
+    <AutoSplitter>
+        <Games>
+            <Game>Oddworld: Munch's Oddysee</Game>
+        </Games>
+        <URLs>
+            <URL>https://raw.githubusercontent.com/wjb1114/MunchAutosplitter/main/Munch.asl</URL>
+        </URLs>
+        <Type>Script</Type>
+        <Description>AutoSplit, AutoStart, AutoReset. Full Game and IL Support. (by wjb1114)</Description>
+	<Website>https://github.com/wjb1114/MunchAutosplitter/blob/main/README.md</Website>
+    </AutoSplitter>
 </AutoSplitters>
