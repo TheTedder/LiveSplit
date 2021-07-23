@@ -359,10 +359,6 @@
       <Project>{924aaffe-5b89-49e2-99ad-ec9373cc838d}</Project>
       <Name>SpeedrunComSharp</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Libs\xlio\Source\Codaxy.Xlio\Codaxy.Xlio.csproj">
-      <Project>{11f82973-690a-48a9-8cb8-bd97e0024e2c}</Project>
-      <Name>Codaxy.Xlio</Name>
-    </ProjectReference>
     <ProjectReference Include="..\UpdateManager\UpdateManager.csproj">
       <Project>{56dea3a0-2eb7-493b-b50f-a5e3aa8ae52a}</Project>
       <Name>UpdateManager</Name>
