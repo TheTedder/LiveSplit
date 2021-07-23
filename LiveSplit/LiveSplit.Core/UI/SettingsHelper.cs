@@ -11,12 +11,14 @@ namespace LiveSplit.UI
 {
     public class SettingsHelper
     {
-        public static CustomFontDialog.FontDialog GetFontDialog(Font previousFont, int minSize, int maxSize)
+        public static FontDialog GetFontDialog(Font previousFont, int minSize, int maxSize)
         {
-            var dialog = new CustomFontDialog.FontDialog();
-            dialog.OriginalFont = previousFont;
-            dialog.MinSize = minSize;
-            dialog.MaxSize = maxSize;
+            var dialog = new FontDialog
+            {
+                Font = previousFont,
+                MinSize = minSize,
+                MaxSize = maxSize
+            };
             return dialog;
         }
 

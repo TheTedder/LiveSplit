@@ -139,9 +139,11 @@ namespace LiveSplit.View
         {
             var timerFont = new Font(Settings.TimerFont.FontFamily.Name, (Settings.TimerFont.Size / 50f) * 18f, Settings.TimerFont.Style, GraphicsUnit.Point);
             var dialog = SettingsHelper.GetFontDialog(timerFont, 7, 20);
-            dialog.FontChanged += (s, ev) => updateTimerFont(((CustomFontDialog.FontChangedEventArgs)ev).NewFont);
-            dialog.ShowDialog(this);
-            lblTimer.Text = TimerFont;
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                updateTimerFont(dialog.Font);
+                lblTimer.Text = TimerFont;
+            }
         }
 
         private void updateTimerFont(Font timerFont)
@@ -152,17 +154,21 @@ namespace LiveSplit.View
         private void btnTimes_Click(object sender, EventArgs e)
         {
             var dialog = SettingsHelper.GetFontDialog(Settings.TimesFont, 7, 20);
-            dialog.FontChanged += (s, ev) => Settings.TimesFont = ((CustomFontDialog.FontChangedEventArgs)ev).NewFont;
-            dialog.ShowDialog(this);
-            lblTimes.Text = MainFont;
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                Settings.TimesFont = dialog.Font;
+                lblTimes.Text = MainFont;
+            }
         }
 
         private void btnTextFont_Click(object sender, EventArgs e)
         {
             var dialog = SettingsHelper.GetFontDialog(Settings.TextFont, 7, 20);
-            dialog.FontChanged += (s, ev) => Settings.TextFont = ((CustomFontDialog.FontChangedEventArgs)ev).NewFont;
-            dialog.ShowDialog(this);
-            lblText.Text = SplitNamesFont;
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                Settings.TextFont = dialog.Font;
+                lblText.Text = SplitNamesFont;
+            }
         }
 
         private void chkRainbow_CheckedChanged(object sender, EventArgs e)
